@@ -13,6 +13,7 @@ import {
 import { geminiAxios, GEMINI_MODEL } from "../config/google-ai.config";
 // import { createPartFromBase64, createUserContent } from "@google/genai";
 import { receiptPrompt } from "../utils/prompt";
+import { evaluateRewards } from "./reward.service";
 
 export const createTransactionService = async (
   body: CreateTransactionType,
@@ -43,6 +44,16 @@ export const createTransactionService = async (
     nextRecurringDate,
     lastProcessed: null,
   });
+
+  // If this is an expense, evaluate rewards (updates threshold.rewardPoints)
+  try {
+    if (transaction && transaction.type === "EXPENSE") {
+      await evaluateRewards(userId, Number(body.amount), transaction.date);
+    }
+  } catch (err) {
+    // don't block transaction creation on reward evaluation failures
+    console.error("evaluateRewards error:", err);
+  }
 
   return transaction;
 };

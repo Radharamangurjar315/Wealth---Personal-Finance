@@ -19,18 +19,18 @@ export const getReportEmailTemplate = (
 
   const reportTitle = `${capitalizeFirstLetter(frequency)} Report`;
 
-  const categoryList = topSpendingCategories
+  const categoryList = (topSpendingCategories || [])
     .map(
       (cat: any) => `<li>
       ${cat.name} - ${formatCurrency(cat.amount)} (${cat.percent}%)
       </li>
     `
     )
-    .join("");
+    .join("") || "<li>No spending data available</li>";
 
-  const insightsList = insights
+  const insightsList = (insights || [])
     .map((insight: string) => `<li>${insight}</li>`)
-    .join("");
+    .join("") || "<li>No insights available</li>";
 
   const currentYear = new Date().getFullYear();
   return `
@@ -60,19 +60,19 @@ export const getReportEmailTemplate = (
                  <table width="100%" style="border-collapse: collapse;">
                    <tr>
                      <td style="padding: 8px 0; font-size: 16px;"><strong>Total Income:</strong></td>
-                     <td style="text-align: right; font-size: 16px;">${formatCurrency(totalIncome)}</td>
+                     <td style="text-align: right; font-size: 16px;">${formatCurrency(totalIncome || 0)}</td>
                    </tr>
                    <tr>
                      <td style="padding: 8px 0; font-size: 16px;"><strong>Total Expenses:</strong></td>
-                     <td style="text-align: right; font-size: 16px;">${formatCurrency(totalExpenses)}</td>
+                     <td style="text-align: right; font-size: 16px;">${formatCurrency(totalExpenses || 0)}</td>
                    </tr>
                    <tr>
                      <td style="padding: 8px 0; font-size: 16px;"><strong>Available Balance:</strong></td>
-                     <td style="text-align: right; font-size: 16px;">${formatCurrency(availableBalance)}</td>
+                     <td style="text-align: right; font-size: 16px;">${formatCurrency(availableBalance || 0)}</td>
                    </tr>
                    <tr>
                      <td style="padding: 8px 0; font-size: 16px;"><strong>Savings Rate:</strong></td>
-                     <td style="text-align: right; font-size: 16px;">${savingsRate.toFixed(2)}%</td>
+                     <td style="text-align: right; font-size: 16px;">${(savingsRate || 0).toFixed(2)}%</td>
                    </tr>
                  </table>
                  <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;" />

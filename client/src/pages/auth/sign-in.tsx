@@ -22,10 +22,10 @@ const SignIn = () => {
         <div className="absolute inset-0 flex flex-col items-end justify-end pt-8 pl-8">
           <div className="w-full max-w-3xl mx-0 pr-5">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Hi, I'm your AI-powered personal finance app, Finora!
+              Hi, I'm your AI-powered personal finance app, Wealth!
             </h1>
             <p className="mt-4 text-gray-600 dark:text-muted-foreground">
-            Finora provides insights, monthly reports, CSV import, recurring transactions, all powered by advanced AI technology. 🚀
+            Wealth provides insights, monthly reports, CSV import, recurring transactions, all powered by advanced AI technology. 🚀
             </p>
           </div>
           <div className="relative max-w-3xl h-full w-full overflow-hidden mt-3">

@@ -21,7 +21,7 @@ export const sendEmail = async ({
 }: Params) => {
   return await resend.emails.send({
     from,
-     to:"gurjar.radharaman03@gmail.com", //Array.isArray(to) ? to : [to],
+    to: Array.isArray(to) ? to : [to],
     text,
     subject,
     html,

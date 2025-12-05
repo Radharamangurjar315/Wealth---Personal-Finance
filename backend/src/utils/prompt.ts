@@ -32,3 +32,44 @@ Example output:
   "type": "EXPENSE"
 }
 `;
+
+export const reportInsightPrompt = ({
+  totalIncome,
+  totalExpenses,
+  availableBalance,
+  savingsRate,
+  categories,
+  periodLabel,
+}: {
+  totalIncome: number;
+  totalExpenses: number;
+  availableBalance: number;
+  savingsRate: number;
+  categories: Record<string, { amount: number; percentage: number }>;
+  periodLabel: string;
+}) => `
+You are a financial advisor AI. Analyze the following financial data and provide 3-5 actionable insights as a JSON array of strings.
+
+Financial Summary for ${periodLabel}:
+- Total Income: ₹${totalIncome.toLocaleString()}
+- Total Expenses: ₹${totalExpenses.toLocaleString()}
+- Available Balance: ₹${availableBalance.toLocaleString()}
+- Savings Rate: ${savingsRate}%
+
+Top Spending Categories:
+${Object.entries(categories)
+  .map(([name, data]) => `- ${name}: ₹${data.amount.toLocaleString()} (${data.percentage}%)`)
+  .join('\n')}
+
+Provide insights as a JSON array of strings. Focus on:
+1. Spending patterns and trends
+2. Savings opportunities
+3. Budget recommendations
+4. Category-specific advice
+5. Financial health assessment
+
+Respond with ONLY a JSON array like:
+["Your savings rate of ${savingsRate}% is excellent, keep it up!", "Consider reducing spending in your top category", "Your income vs expenses ratio looks healthy"]
+
+No markdown, no explanations, just the JSON array.
+`;

@@ -30,8 +30,11 @@ const Navbar = () => {
       href: PROTECTED_ROUTES.REPORTS,
       label: "Reports",
     },
+    {
+      href: PROTECTED_ROUTES.THRESHOLD_SETTINGS,
+      label: "Threshold",
+    },
      { href: PROTECTED_ROUTES.MANUAL_REPORT, label: "Manual Report" },
-     { href: PROTECTED_ROUTES.SAVED_REPORTS, label: "Saved Reports" },
     {
       href: PROTECTED_ROUTES.SETTINGS,
       label: "Settings",

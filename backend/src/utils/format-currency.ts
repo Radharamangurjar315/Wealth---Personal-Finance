@@ -5,15 +5,16 @@ export function convertToPaise(amount: number): number {
 
 // Convert paise to rupees when retrieving (e.g., 1050 → ₹10.50)
 export function convertToRupees(amount: number): number {
-  return amount / 100;
+  return (amount ?? 0) / 100;
 }
 
 // Format number as Indian currency (e.g., 1234567.89 → ₹12,34,567.89)
 export function formatCurrency(amount: number): string {
+  const safeAmount = amount ?? 0;
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(amount);
+  }).format(safeAmount);
 }

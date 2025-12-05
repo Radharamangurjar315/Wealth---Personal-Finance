@@ -232,7 +232,7 @@ async function generateInsightsAI({
   periodLabel: string;
 }) {
   try {
-    // ✅ Build AI prompt (we’ll fix your prompt to use reportInsightPrompt)
+    //  Build AI prompt (we’ll fix your prompt to use reportInsightPrompt)
     const prompt = reportInsightPrompt({
       totalIncome,
       totalExpenses,
@@ -242,9 +242,9 @@ async function generateInsightsAI({
       periodLabel,
     });
 
-    console.log("📡 Sending financial summary to Gemini...");
+    console.log(" Sending financial summary to Gemini...");
 
-    // ✅ REST API request to Gemini (same as transaction service)
+    //  REST API request to Gemini (same as transaction service)
     const { data } = await geminiAxios.post(
       `/${GEMINI_MODEL}:generateContent`,
       {
@@ -261,14 +261,14 @@ async function generateInsightsAI({
       }
     );
 
-    // ✅ Extract raw response text
+    //  Extract raw response text
     const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     console.log("🔍 Gemini Insights raw response:", rawText);
 
     if (!rawText) return [];
 
-    // ✅ Clean markdown formatting if Gemini wrapped response in code fences
+    // Clean markdown formatting if Gemini wrapped response in code fences
     const cleaned = rawText.replace(/```(?:json)?\n?/g, "").trim();
 
     try {
@@ -276,11 +276,11 @@ async function generateInsightsAI({
       if (Array.isArray(parsed)) return parsed;
       return [];
     } catch (e) {
-      console.error("❌ Failed to parse Gemini insights:", cleaned);
+      console.error("Failed to parse Gemini insights:", cleaned);
       return [];
     }
   } catch (error: any) {
-    console.error("❌ Gemini Insights Error:", error.response?.data || error.message);
+    console.error("Gemini Insights Error:", error.response?.data || error.message);
     return [];
   }
 }
@@ -315,4 +315,3 @@ function createPartFromBase64(
 function reportInsightPrompt(arg0: { totalIncome: number; totalExpenses: number; availableBalance: number; savingsRate: number; categories: Record<string, { amount: number; percentage: number; }>; periodLabel: string; }) {
   throw new Error("Function not implemented.");
 }
-
