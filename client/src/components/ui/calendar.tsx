@@ -7,12 +7,27 @@ import { DayPicker } from "react-day-picker"
 import { cn } from "@/lib/utils"
 import { buttonVariants } from "@/components/ui/button"
 
+type IconProps = { className?: string } & React.SVGProps<SVGSVGElement>
+
 function Calendar({
   className,
   classNames,
   showOutsideDays = true,
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
+  // Keep icon prop types strict
+  const calendarComponents: Record<
+    "IconLeft" | "IconRight",
+    React.ComponentType<IconProps>
+  > = {
+    IconLeft: ({ className, ...rest }: IconProps) => (
+      <ChevronLeft className={cn("size-4", className)} {...(rest as React.SVGProps<SVGSVGElement>)} />
+    ),
+    IconRight: ({ className, ...rest }: IconProps) => (
+      <ChevronRight className={cn("size-4", className)} {...(rest as React.SVGProps<SVGSVGElement>)} />
+    ),
+  }
+
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -59,14 +74,9 @@ function Calendar({
         day_hidden: "invisible",
         ...classNames,
       }}
-      components={{
-        IconLeft: ({ className, ...props }) => (
-          <ChevronLeft className={cn("size-4", className)} {...props} />
-        ),
-        IconRight: ({ className, ...props }) => (
-          <ChevronRight className={cn("size-4", className)} {...props} />
-        ),
-      }}
+      // localized cast: keep calendarComponents strongly typed above,
+      // but cast only here to satisfy react-day-picker's CustomComponents shape.
+      components={calendarComponents as React.ComponentProps<typeof DayPicker>["components"]}
       {...props}
     />
   )
