@@ -1,4 +1,6 @@
-import mongoose from "mongoose";
+
+import mongoose, {Document, Schema} from "mongoose";
+
 
 export enum ReportFrequencyEnum {
   MONTHLY = "MONTHLY",
@@ -14,7 +16,7 @@ export interface ReportSettingDocument extends Document {
   updatedAt: Date;
 }
 
-const reportSettingSchema = new mongoose.Schema<ReportSettingDocument>(
+const reportSettingSchema = new Schema<ReportSettingDocument>(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -42,9 +44,6 @@ const reportSettingSchema = new mongoose.Schema<ReportSettingDocument>(
   }
 );
 
-const ReportSettingModel = mongoose.model<ReportSettingDocument>(
-  "ReportSetting",
-  reportSettingSchema
-);
+const ReportSettingModel = mongoose.model("ReportSetting", reportSettingSchema) as mongoose.Model<ReportSettingDocument>;
 
 export default ReportSettingModel;

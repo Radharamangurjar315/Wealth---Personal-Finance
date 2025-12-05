@@ -4,7 +4,10 @@ import { ErrorRequestHandler } from "express";
 import { HTTPSTATUS } from "../config/http.config";
 import { AppError } from "../utils/app-error";
 import { ErrorCodeEnum } from "../enums/error-code.enum";
-import { MulterError } from "multer";
+
+// Note: we intentionally do NOT import MulterError here to avoid TS namespace/type issues.
+// We'll detect multer errors at runtime by checking a known property (code).
+// This keeps runtime behavior unchanged while avoiding problematic type imports.
 
 const formatZodError = (res: Response, error: z.ZodError) => {
   const errors = error?.issues?.map((err) => ({
@@ -18,23 +21,24 @@ const formatZodError = (res: Response, error: z.ZodError) => {
   });
 };
 
-const handleMulterError = (error: MulterError) => {
-  const messages = {
+const handleMulterError = (error: any) => {
+  const messages: Record<string, string> = {
     LIMIT_UNEXPECTED_FILE: "Invalid file field name. Please use 'file'",
     LIMIT_FILE_SIZE: "File size exceeds the limit",
     LIMIT_FILE_COUNT: "Too many files uploaded",
     default: "File upload error",
   };
 
+  const code = error?.code as string | undefined;
   return {
     status: HTTPSTATUS.BAD_REQUEST,
-    message: messages[error.code as keyof typeof messages] || messages.default,
-    error: error.message,
+    message: (code && messages[code]) || messages.default,
+    error: error?.message,
   };
 };
 
 export const errorHandler: ErrorRequestHandler = (
-  error,
+  error: any,
   req,
   res,
   next
@@ -45,7 +49,8 @@ export const errorHandler: ErrorRequestHandler = (
     return formatZodError(res, error);
   }
 
-  if (error instanceof MulterError) {
+  // Detect multer error by the presence of `code` (e.g. 'LIMIT_FILE_SIZE') or other multer shape
+  if (error && typeof error.code === "string") {
     const { status, message, error: err } = handleMulterError(error);
     return res.status(status).json({
       message,
@@ -63,6 +68,7 @@ export const errorHandler: ErrorRequestHandler = (
 
   return res.status(HTTPSTATUS.INTERNAL_SERVER_ERROR).json({
     message: "Internal Server Error",
-    error: error?.message || "Unknow error occurred",
+    error: error?.message || "Unknown error occurred",
   });
 };
+export default errorHandler;

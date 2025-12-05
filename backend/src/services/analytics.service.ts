@@ -242,11 +242,12 @@ export const summaryAnalyticsService = async (
         ),
       },
     },
-    preset: {
+        preset: {
       ...range,
       value: rangeValue || DateRangeEnum.ALL_TIME,
-      label: range?.label || "All Time",
+      label: (range as any).label || "All Time",
     },
+
   };
 };
 
@@ -360,11 +361,12 @@ export const chartAnalyticsService = async (
     chartData: transaformedData,
     totalIncomeCount: resultData.totalIncomeCount,
     totalExpenseCount: resultData.totalExpenseCount,
-    preset: {
+        preset: {
       ...range,
       value: rangeValue || DateRangeEnum.ALL_TIME,
-      label: range?.label || "All Time",
+      label: (range as any).label || "All Time",
     },
+
   };
 };
 
@@ -486,11 +488,12 @@ export const expensePieChartBreakdownService = async (
 
   return {
     ...transformedData,
-    preset: {
+        preset: {
       ...range,
       value: rangeValue || DateRangeEnum.ALL_TIME,
-      label: range?.label || "All Time",
+      label: (range as any).label || "All Time",
     },
+
   };
 };
 

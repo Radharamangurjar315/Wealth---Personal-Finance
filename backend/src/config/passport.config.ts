@@ -1,8 +1,5 @@
-import {
-  Strategy as JwtStrategy,
-  ExtractJwt,
-  StrategyOptions,
-} from "passport-jwt";
+// src/config/passport.config.ts
+import { Strategy as JwtStrategy, ExtractJwt } from "passport-jwt";
 import passport from "passport";
 import { Env } from "./env.config";
 import { findByIdUserService } from "../services/user.service";
@@ -11,7 +8,8 @@ interface JwtPayload {
   userId: string;
 }
 
-const options: StrategyOptions = {
+// Use `any` for options to avoid typing/version mismatches between @types/passport-jwt and the runtime.
+const options: any = {
   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
   secretOrKey: Env.JWT_SECRET,
   audience: ["user"],
@@ -32,7 +30,7 @@ passport.use(
 
       return done(null, user);
     } catch (error) {
-      return done(error, false);
+      return done(error as any, false);
     }
   })
 );
@@ -43,3 +41,4 @@ passport.deserializeUser((user: any, done) => done(null, user));
 export const passportAuthenticateJwt = passport.authenticate("jwt", {
   session: false,
 });
+export default passport;

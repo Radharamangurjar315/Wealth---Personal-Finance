@@ -1,3 +1,4 @@
+import { Document } from "mongoose";
 import mongoose, { Schema } from "mongoose";
 import { convertToPaise, convertToRupees } from "../utils/format-currency";
 
@@ -50,7 +51,7 @@ export interface TransactionDocument extends Document {
 const transactionSchema = new Schema<TransactionDocument>(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: mongoose.Types.ObjectId,
       required: true,
       ref: "User",
     },
@@ -119,9 +120,9 @@ const transactionSchema = new Schema<TransactionDocument>(
   }
 );
 
-const TransactionModel = mongoose.model<TransactionDocument>(
+const TransactionModel = mongoose.model(
   "Transaction",
   transactionSchema
-);
+) as mongoose.Model<TransactionDocument>;
 
 export default TransactionModel;

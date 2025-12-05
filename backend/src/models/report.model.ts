@@ -1,3 +1,4 @@
+import { Document } from "mongoose";
 import mongoose from "mongoose";
 
 export enum ReportStatusEnum {
@@ -16,7 +17,7 @@ export interface ReportDocument extends Document {
   updatedAt: Date;
 }
 
-const reportSchema = new mongoose.Schema<ReportDocument>(
+const reportSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -36,11 +37,11 @@ const reportSchema = new mongoose.Schema<ReportDocument>(
       enum: Object.values(ReportStatusEnum),
       default: ReportStatusEnum.PENDING,
     },
-  },
+  } as mongoose.SchemaDefinition<ReportDocument>,
   {
     timestamps: true,
   }
 );
 
-const ReportModel = mongoose.model<ReportDocument>("Report", reportSchema);
+const ReportModel = mongoose.model("Report", reportSchema) as mongoose.Model<ReportDocument>;
 export default ReportModel;

@@ -12,7 +12,7 @@ import { convertToRupees } from "../utils/format-currency";
 import { format } from "date-fns";
 // import { genAI, genAIModel } from "../config/google-ai.config";
 import { geminiAxios, GEMINI_MODEL } from "../config/google-ai.config";
-import { createUserContent } from "@google/genai";
+// import { createUserContent } from "@google/genai";
 import { receiptPrompt } from "../utils/prompt";
 
 export const getAllReportsService = async (
