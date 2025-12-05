@@ -6,7 +6,6 @@ import passport from "passport";
 import { Env } from "./config/env.config";
 import { HTTPSTATUS } from "./config/http.config";
 import { errorHandler } from "./middlewares/errorHandler.middleware";
-import { BadRequestException } from "./utils/app-error";
 import { asyncHandler } from "./middlewares/asyncHandler.middlerware";
 import connctDatabase from "./config/database.config";
 import authRoutes from "./routes/auth.route";
@@ -15,10 +14,13 @@ import userRoutes from "./routes/user.route";
 import transactionRoutes from "./routes/transaction.route";
 import { initializeCrons } from "./cron";
 import reportRoutes from "./routes/report.route";
-import { getDateRange } from "./utils/date";
 import analyticsRoutes from "./routes/analytics.route";
 import thresholdRoutes from "./routes/threshold.route";
-console.log("🔑 GEMINI_API_KEY:", process.env.GEMINI_API_KEY ? "Loaded ✅" : "❌ Missing");
+
+console.log(
+  "🔑 GEMINI_API_KEY:",
+  process.env.GEMINI_API_KEY ? "Loaded ✅" : "❌ Missing"
+);
 
 const app = express();
 const BASE_PATH = Env.BASE_PATH;
@@ -35,15 +37,22 @@ app.use(
   })
 );
 
-app.get(
-  "/",
-  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    throw new BadRequestException("This is a test error");
-    res.status(HTTPSTATUS.OK).json({
-      message: "Hello Subcribe to the channel",
-    });
-  })
-);
+/**
+ * Root route — simple info. Do NOT throw test errors here in production.
+ */
+app.get("/", (_req: Request, res: Response) => {
+  res.status(HTTPSTATUS.OK).json({
+    message: "Wealth Personal Finance API is running 🚀",
+    version: "1.0.0",
+  });
+});
+
+/**
+ * Health check route for Render / load balancers
+ */
+app.get("/health", (_req: Request, res: Response) => {
+  res.status(HTTPSTATUS.OK).json({ status: "ok" });
+});
 
 app.use(`${BASE_PATH}/auth`, authRoutes);
 app.use(`${BASE_PATH}/user`, passportAuthenticateJwt, userRoutes);
@@ -51,7 +60,6 @@ app.use(`${BASE_PATH}/transaction`, passportAuthenticateJwt, transactionRoutes);
 app.use(`${BASE_PATH}/report`, passportAuthenticateJwt, reportRoutes);
 app.use(`${BASE_PATH}/analytics`, passportAuthenticateJwt, analyticsRoutes);
 app.use(`${BASE_PATH}/threshold`, passportAuthenticateJwt, thresholdRoutes);
-
 
 app.use(errorHandler);
 
@@ -62,7 +70,11 @@ app.listen(Env.PORT, async () => {
     await initializeCrons();
   }
 
-  console.log(`Server is running on port ${Env.PORT} in ${Env.NODE_ENV} mode`);
-  console.log("🔐 Gemini Key (from process.env):", process.env.GEMINI_API_KEY ? "Loaded ✅" : "❌ Missing");
-
+  console.log(
+    `Server is running on port ${Env.PORT} in ${Env.NODE_ENV} mode`
+  );
+  console.log(
+    "🔐 Gemini Key (from process.env):",
+    process.env.GEMINI_API_KEY ? "Loaded ✅" : "❌ Missing"
+  );
 });
