@@ -2,6 +2,7 @@ import { ReportType } from "../../@types/report.type";
 import { formatCurrency } from "../../utils/format-currency";
 import { capitalizeFirstLetter } from "../../utils/helper";
 
+
 export const getReportEmailTemplate = (
   reportData: ReportType & { username: string },
   frequency: string
@@ -13,9 +14,23 @@ export const getReportEmailTemplate = (
     totalExpenses,
     availableBalance,
     savingsRate,
+    healthScore,
     topSpendingCategories,
     insights,
   } = reportData;
+
+  const score = healthScore || 0;
+
+  let scoreColor = "#ef4444"; // red
+  let scoreLabel = "Financial Risk";
+
+  if (score >= 80) {
+    scoreColor = "#16a34a"; // green
+    scoreLabel = "Excellent Stability";
+  } else if (score >= 50) {
+    scoreColor = "#f59e0b"; // yellow
+    scoreLabel = "Moderate Stability";
+  }
 
   const reportTitle = `${capitalizeFirstLetter(frequency)} Report`;
 
@@ -74,6 +89,34 @@ export const getReportEmailTemplate = (
                      <td style="padding: 8px 0; font-size: 16px;"><strong>Savings Rate:</strong></td>
                      <td style="text-align: right; font-size: 16px;">${(savingsRate || 0).toFixed(2)}%</td>
                    </tr>
+                   <tr>
+                  <td style="padding: 12px 0; font-size: 16px;">
+                    <strong>Financial Health Score:</strong>
+                  </td>
+                  <td style="text-align: right; font-size: 16px;">
+                    <span style="color: ${scoreColor}; font-weight: bold;">
+                      ${score}/100
+                    </span>
+                  </td>
+                </tr>
+                <tr>
+                  <td colspan="2" style="padding-top: 10px;">
+                    <!-- Progress Bar Table -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="border-radius: 6px; background-color: #e5e7eb;">
+                      <tr>
+                        <td width="${score}%" 
+                            style="background-color: ${scoreColor}; 
+                                  padding: 6px 0; 
+                                  border-radius: 6px;">
+                        </td>
+                        <td width="${100 - score}%"></td>
+                      </tr>
+                    </table>
+                    <p style="margin: 6px 0 0; font-size: 13px; color: ${scoreColor}; font-weight: 500;">
+                      ${scoreLabel}
+                    </p>
+                  </td>
+                </tr>
                  </table>
                  <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;" />
                  <h4 style="margin: 0 0 10px; font-size: 16px;">Top Spending Categories</h4>
@@ -90,7 +133,7 @@ export const getReportEmailTemplate = (
              </tr>
              <tr>
                <td style="background-color: #f0f0f0; text-align: center; padding: 15px; font-size: 12px; color: #999;">
-                 &copy; ${currentYear} Finora. All rights reserved.
+                 &copy; ${currentYear} Wealth. All rights reserved.
                </td>
              </tr>
            </table>

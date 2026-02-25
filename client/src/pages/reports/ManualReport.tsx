@@ -31,7 +31,12 @@ export default function ManualReport() {
       setLoading(false);
     }
   };
-
+  
+  function getHealthColor(score: number) {
+  if (score >= 80) return "text-green-600";
+  if (score >= 50) return "text-yellow-600";
+  return "text-red-600";
+ }
   return (
     <div className="p-6 max-w-3xl mx-auto space-y-6">
       <h1 className="text-2xl font-semibold">Generate Manual Report</h1>
@@ -87,6 +92,19 @@ export default function ManualReport() {
               <div className="text-xl font-bold">{report.summary.savingsRate}%</div>
             </div>
           </div>
+
+          <div className="bg-white shadow rounded-lg p-4">
+            <h4 className="text-sm text-gray-500">Financial Health Score</h4>
+            <p className={`text-2xl font-bold ${getHealthColor(report.summary.healthScore)}`}>
+              {report.summary.healthScore}/100
+            </p>
+          </div>
+          <div className="w-full bg-gray-200 rounded-full h-3">
+  <div
+    className="bg-green-500 h-3 rounded-full"
+    style={{ width: `${report.summary.healthScore}%` }}
+  ></div>
+</div>
 
           <div className="mt-4">
             <h3 className="font-medium">Top Categories</h3>

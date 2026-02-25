@@ -18,8 +18,8 @@ import analyticsRoutes from "./routes/analytics.route";
 import thresholdRoutes from "./routes/threshold.route";
 
 console.log(
-  "🔑 GEMINI_API_KEY:",
-  process.env.GEMINI_API_KEY ? "Loaded ✅" : "❌ Missing"
+  "GEMINI_API_KEY:",
+  process.env.GEMINI_API_KEY ? "Loaded " : " Missing"
 );
 
 const app = express();
@@ -37,12 +37,11 @@ app.use(
   })
 );
 
-/**
- * Root route — simple info. Do NOT throw test errors here in production.
- */
+
+
 app.get("/", (_req: Request, res: Response) => {
   res.status(HTTPSTATUS.OK).json({
-    message: "Wealth Personal Finance API is running 🚀",
+    message: "Wealth Personal Finance API is running ",
     version: "1.0.0",
   });
 });
@@ -74,7 +73,7 @@ app.listen(Env.PORT, async () => {
     `Server is running on port ${Env.PORT} in ${Env.NODE_ENV} mode`
   );
   console.log(
-    "🔐 Gemini Key (from process.env):",
-    process.env.GEMINI_API_KEY ? "Loaded ✅" : "❌ Missing"
+    " Gemini Key (from process.env):",
+    process.env.GEMINI_API_KEY ? "Loaded " : " Missing"
   );
 });

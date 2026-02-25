@@ -4,7 +4,16 @@ import axios from "axios";
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
 function authHeader() {
-  const token = localStorage.getItem("token");
+  const persistRoot = localStorage.getItem("persist:root");
+  if (!persistRoot) return {};
+
+  const parsedRoot = JSON.parse(persistRoot);
+
+  if (!parsedRoot.auth) return {};
+
+  const authData = JSON.parse(parsedRoot.auth);
+  const token = authData?.accessToken;
+
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

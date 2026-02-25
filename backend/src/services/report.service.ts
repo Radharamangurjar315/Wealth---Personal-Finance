@@ -89,13 +89,18 @@ export const generateReportService = async (
   fromDate: Date,
   toDate: Date
 ) => {
-  const results = await TransactionModel.aggregate([
-    {
-      $match: {
-        userId: new mongoose.Types.ObjectId(userId),
-        date: { $gte: fromDate, $lte: toDate },
-      },
+  // ✅ Fix: Normalize date range (IMPORTANT)
+  const start = new Date(fromDate);
+const end = new Date(toDate);
+end.setDate(end.getDate() + 1);
+
+const results = await TransactionModel.aggregate([
+  {
+    $match: {
+      userId: new mongoose.Types.ObjectId(userId),
+      date: { $gte: start, $lt: end },
     },
+  },
     {
       $facet: {
         summary: [
@@ -111,7 +116,6 @@ export const generateReportService = async (
                   ],
                 },
               },
-
               totalExpenses: {
                 $sum: {
                   $cond: [
@@ -124,44 +128,27 @@ export const generateReportService = async (
             },
           },
         ],
-
         categories: [
-          {
-            $match: { type: TransactionTypeEnum.EXPENSE },
-          },
+          { $match: { type: TransactionTypeEnum.EXPENSE } },
           {
             $group: {
               _id: "$category",
               total: { $sum: { $abs: "$amount" } },
             },
           },
-          {
-            $sort: { total: -1 },
-          },
-          {
-            $limit: 5,
-          },
+          { $sort: { total: -1 } },
+          { $limit: 5 },
         ],
       },
     },
     {
       $project: {
-        totalIncome: {
-          $arrayElemAt: ["$summary.totalIncome", 0],
-        },
-        totalExpenses: {
-          $arrayElemAt: ["$summary.totalExpenses", 0],
-        },
+        totalIncome: { $arrayElemAt: ["$summary.totalIncome", 0] },
+        totalExpenses: { $arrayElemAt: ["$summary.totalExpenses", 0] },
         categories: 1,
       },
     },
   ]);
-
-  if (
-    !results?.length ||
-    (results[0]?.totalIncome === 0 && results[0]?.totalExpenses === 0)
-  )
-    return null;
 
   const {
     totalIncome = 0,
@@ -169,33 +156,72 @@ export const generateReportService = async (
     categories = [],
   } = results[0] || {};
 
-  console.log(results[0], "results");
-
-  const byCategory = categories.reduce(
-    (acc: any, { _id, total }: any) => {
-      acc[_id] = {
-        amount: convertToRupees(total),
-        percentage:
-          totalExpenses > 0 ? Math.round((total / totalExpenses) * 100) : 0,
-      };
-      return acc;
-    },
-    {} as Record<string, { amount: number; percentage: number }>
-  );
-
   const availableBalance = totalIncome - totalExpenses;
   const savingsRate = calculateSavingRate(totalIncome, totalExpenses);
+  
+  const byCategory = categories.reduce(
+  (acc: any, { _id, total }: any) => {
+    acc[_id] = {
+      amount: convertToRupees(total),
+      percentage:
+        totalExpenses > 0
+          ? Math.round((total / totalExpenses) * 100)
+          : 0,
+    };
+    return acc;
+  },
+  {} as Record<string, { amount: number; percentage: number }>
+);
 
-  const periodLabel = `${format(fromDate, "MMMM d")} - ${format(toDate, "d, yyyy")}`;
+// ✅ NOW calculate health score
+const healthScore = calculateHealthScore(
+  totalIncome,
+  totalExpenses,
+  savingsRate,
+  byCategory
+);
 
-  const insights = await generateInsightsAI({
-    totalIncome,
-    totalExpenses,
-    availableBalance,
-    savingsRate,
-    categories: byCategory,
-    periodLabel: periodLabel,
-  });
+
+
+  const periodLabel = `${format(start, "MMMM d")} - ${format(
+    end,
+    "d, yyyy"
+  )}`;
+
+  // ✅ Handle empty data gracefully (no null return)
+  if (totalIncome === 0 && totalExpenses === 0) {
+    return {
+      period: periodLabel,
+      summary: {
+        income: 0,
+        expenses: 0,
+        balance: 0,
+        savingsRate: 0,
+        healthScore,
+        topCategories: [],
+      },
+      insights: [
+        "No financial activity recorded during this period.",
+        "Try selecting a wider date range to analyze spending trends.",
+      ],
+    };
+  }
+
+
+  let insights: string[] = [];
+
+  try {
+    insights = await generateInsightsAI({
+      totalIncome,
+      totalExpenses,
+      availableBalance,
+      savingsRate,
+      categories: byCategory,
+      periodLabel,
+    });
+  } catch {
+    insights = [];
+  }
 
   return {
     period: periodLabel,
@@ -204,13 +230,19 @@ export const generateReportService = async (
       expenses: convertToRupees(totalExpenses),
       balance: convertToRupees(availableBalance),
       savingsRate: Number(savingsRate.toFixed(1)),
-      topCategories: Object.entries(byCategory)?.map(([name, cat]: any) => ({
-        name,
-        amount: cat.amount,
-        percent: cat.percentage,
-      })),
+      healthScore,
+      topCategories: Object.entries(byCategory).map(
+        ([name, cat]: any) => ({
+          name,
+          amount: cat.amount,
+          percent: cat.percentage,
+        })
+      ),
     },
-    insights,
+    insights:
+      insights.length > 0
+        ? insights
+        : ["Your financial summary has been generated successfully."],
   };
 };
 
@@ -280,9 +312,54 @@ async function generateInsightsAI({
       return [];
     }
   } catch (error: any) {
-    console.error("Gemini Insights Error:", error.response?.data || error.message);
-    return [];
+  console.error("Gemini Insights Error:", error.response?.data || error.message);
+
+  // Fallback to local smart insights
+  return generateLocalInsights(
+    totalIncome,
+    totalExpenses,
+    availableBalance,
+    savingsRate,
+    categories
+  );
+}
+}
+
+function generateLocalInsights(
+  income: number,
+  expenses: number,
+  balance: number,
+  savingsRate: number,
+  categories: Record<string, { amount: number; percentage: number }>
+) {
+  const insights: string[] = [];
+
+  if (income > 0 && savingsRate >= 50) {
+    insights.push("Excellent savings performance this period.");
   }
+
+  if (expenses > income) {
+    insights.push("Your expenses exceeded your income.");
+  }
+
+  if (balance > 0) {
+    insights.push("You maintained a positive financial balance.");
+  }
+
+  const topCategory = Object.entries(categories)[0];
+
+  if (topCategory) {
+    const [name, data] = topCategory;
+    if (data.percentage > 40) {
+      insights.push(
+        `A significant portion of spending (${data.percentage}%) is on ${name}.`
+      );
+    }
+  }
+
+  return insights.length
+    ? insights
+    : ["Your financial summary has been successfully generated."];
 }
 
 
@@ -312,6 +389,78 @@ function createPartFromBase64(
   } as unknown as import("@google/genai").PartUnion;
 }
 
-function reportInsightPrompt(arg0: { totalIncome: number; totalExpenses: number; availableBalance: number; savingsRate: number; categories: Record<string, { amount: number; percentage: number; }>; periodLabel: string; }) {
-  throw new Error("Function not implemented.");
+function reportInsightPrompt({
+  totalIncome,
+  totalExpenses,
+  availableBalance,
+  savingsRate,
+  categories,
+  periodLabel,
+}: {
+  totalIncome: number;
+  totalExpenses: number;
+  availableBalance: number;
+  savingsRate: number;
+  categories: Record<string, { amount: number; percentage: number }>;
+  periodLabel: string;
+}) {
+  return `
+You are a financial analyst AI.
+
+Analyze the following financial summary for the period: ${periodLabel}.
+
+Total Income: ₹${totalIncome}
+Total Expenses: ₹${totalExpenses}
+Available Balance: ₹${availableBalance}
+Savings Rate: ${savingsRate}%
+
+Top Spending Categories:
+${Object.entries(categories)
+  .map(
+    ([name, cat]) =>
+      `- ${name}: ₹${cat.amount} (${cat.percentage}%)`
+  )
+  .join("\n")}
+
+Generate 3-5 short, actionable financial insights.
+
+IMPORTANT:
+- Respond ONLY in valid JSON array format.
+- Example format:
+[
+  "Insight 1",
+  "Insight 2",
+  "Insight 3"
+]
+`;
 }
+
+function calculateHealthScore(
+  income: number,
+  expenses: number,
+  savingsRate: number,
+  categories: Record<string, { amount: number; percentage: number }>
+) {
+  let score = 100;
+
+  // 1️⃣ Savings strength
+  if (income > 0) {
+    if (savingsRate < 10) score -= 40;
+    else if (savingsRate < 30) score -= 20;
+  }
+
+  // 2️⃣ Overspending penalty
+  if (expenses > income) score -= 30;
+
+  // 3️⃣ Spending concentration
+  const topCategory = Object.values(categories)[0];
+  if (topCategory && topCategory.percentage > 60) {
+    score -= 20;
+  }
+
+  // 4️⃣ No income but expenses
+  if (income === 0 && expenses > 0) score -= 30;
+
+  return Math.max(score, 0);
+}
+

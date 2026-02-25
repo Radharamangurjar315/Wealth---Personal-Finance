@@ -17,4 +17,5 @@ reportRoutes.put("/update-setting", updateReportSettingController);
 
 reportRoutes.post("/manual", passportAuthenticateJwt, generateManualReportController);
 
+
 export default reportRoutes;
