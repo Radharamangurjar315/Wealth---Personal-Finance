@@ -1,6 +1,7 @@
 import Navbar from "@/components/navbar";
 import { Outlet } from "react-router-dom";
 import EditTransactionDrawer from "@/components/transaction/edit-transaction-drawer";
+import Chatbot from "@/features/chatbot/chatbot";
 
 const AppLayout = () => {
   return (
@@ -12,6 +13,7 @@ const AppLayout = () => {
       </main>
     </div>
     <EditTransactionDrawer />
+    <Chatbot />
     </>
   );
 };
