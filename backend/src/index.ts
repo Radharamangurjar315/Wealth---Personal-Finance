@@ -17,6 +17,7 @@ import reportRoutes from "./routes/report.route";
 import analyticsRoutes from "./routes/analytics.route";
 import thresholdRoutes from "./routes/threshold.route";
 import chatbotRoutes from "./routes/chatbot.route";
+import insightsRoutes from "./routes/insights.route";
 
 console.log(
   "GEMINI_API_KEY:",
@@ -61,6 +62,7 @@ app.use(`${BASE_PATH}/report`, passportAuthenticateJwt, reportRoutes);
 app.use(`${BASE_PATH}/analytics`, passportAuthenticateJwt, analyticsRoutes);
 app.use(`${BASE_PATH}/threshold`, passportAuthenticateJwt, thresholdRoutes);
 app.use(`${BASE_PATH}/chatbot`, passportAuthenticateJwt, chatbotRoutes);
+app.use(`${BASE_PATH}/insights`, passportAuthenticateJwt, insightsRoutes);
 
 app.use(errorHandler);
 

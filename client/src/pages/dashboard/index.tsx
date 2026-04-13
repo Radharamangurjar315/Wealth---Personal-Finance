@@ -4,6 +4,7 @@ import PageLayout from "@/components/page-layout";
 //import ExpenseBreakDown from "./expense-breakdown";
 import ExpensePieChart from "./expense-pie-chart";
 import DashboardRecentTransactions from "./dashboard-recent-transactions";
+import FinancialInsights from "./financial-insights";
 import { useState } from "react";
 import { DateRangeType } from "@/components/date-range-select";
 
@@ -30,6 +31,10 @@ const Dashboard = () => {
           <div className="lg:col-span-2">
             <ExpensePieChart dateRange={dateRange} />
           </div>
+        </div>
+        {/* AI Financial Insights */}
+        <div className="w-full mt-0">
+          <FinancialInsights />
         </div>
         {/* Dashboard Recent Transactions */}
         <div className="w-full mt-0">

@@ -14,6 +14,7 @@ import { geminiAxios, GEMINI_MODEL } from "../config/google-ai.config";
 // import { createPartFromBase64, createUserContent } from "@google/genai";
 import { receiptPrompt } from "../utils/prompt";
 import { evaluateRewards } from "./reward.service";
+import { invalidateChatbotCache } from "./chatbot.service";
 
 export const createTransactionService = async (
   body: CreateTransactionType,
@@ -54,6 +55,9 @@ export const createTransactionService = async (
     // don't block transaction creation on reward evaluation failures
     console.error("evaluateRewards error:", err);
   }
+
+  // Invalidate chatbot cache so next AI query uses fresh data
+  invalidateChatbotCache(userId);
 
   return transaction;
 };
@@ -207,6 +211,9 @@ export const updateTransactionService = async (
 
   await existingTransaction.save();
 
+  // Invalidate chatbot cache so next AI query uses fresh data
+  invalidateChatbotCache(userId);
+
   return;
 };
 
@@ -219,6 +226,9 @@ export const deleteTransactionService = async (
     userId,
   });
   if (!deleted) throw new NotFoundException("Transaction not found");
+
+  // Invalidate chatbot cache so next AI query uses fresh data
+  invalidateChatbotCache(userId);
 
   return;
 };
@@ -234,6 +244,9 @@ export const bulkDeleteTransactionService = async (
 
   if (result.deletedCount === 0)
     throw new NotFoundException("No transations found");
+
+  // Invalidate chatbot cache so next AI query uses fresh data
+  invalidateChatbotCache(userId);
 
   return {
     sucess: true,
@@ -264,6 +277,9 @@ export const bulkTransactionService = async (
     const result = await TransactionModel.bulkWrite(bulkOps, {
       ordered: true,
     });
+
+    // Invalidate chatbot cache so next AI query uses fresh data
+    invalidateChatbotCache(userId);
 
     return {
       insertedCount: result.insertedCount,
