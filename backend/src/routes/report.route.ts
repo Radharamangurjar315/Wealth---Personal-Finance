@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  downloadReportPdfController,
   generateReportController,
   getAllReportsController,
   updateReportSettingController,
@@ -12,6 +13,7 @@ const reportRoutes = Router();
 
 reportRoutes.get("/all", getAllReportsController);
 reportRoutes.get("/generate", generateReportController);
+reportRoutes.get("/download-pdf", downloadReportPdfController);
 reportRoutes.put("/update-setting", updateReportSettingController);
 
 

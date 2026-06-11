@@ -5,12 +5,25 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Download } from "lucide-react";
+
+const API = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
+
+function getAuthToken() {
+  const persistRoot = localStorage.getItem("persist:root");
+  if (!persistRoot) return null;
+  const parsedRoot = JSON.parse(persistRoot);
+  if (!parsedRoot.auth) return null;
+  const authData = JSON.parse(parsedRoot.auth);
+  return authData?.accessToken || null;
+}
 
 export default function ManualReport() {
   const [from, setFrom] = useState<string>("");
   const [to, setTo] = useState<string>("");
   const [email, setEmail] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
+  const [pdfLoading, setPdfLoading] = useState(false);
   const [report, setReport] = useState<any | null>(null);
 
   const handleGenerate = async () => {
@@ -29,6 +42,43 @@ export default function ManualReport() {
       toast.error(err?.response?.data?.message || "Failed to generate report");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadPdf = async () => {
+    if (!from || !to) {
+      toast.error("Select both from and to dates");
+      return;
+    }
+    setPdfLoading(true);
+    try {
+      const token = getAuthToken();
+      const response = await fetch(
+        `${API}/report/download-pdf?from=${from}&to=${to}`,
+        {
+          method: "GET",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to generate PDF");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `wealth_report_${from}_to_${to}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("PDF downloaded successfully");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to download PDF");
+    } finally {
+      setPdfLoading(false);
     }
   };
   
@@ -63,6 +113,15 @@ export default function ManualReport() {
       <div className="flex gap-3">
         <Button onClick={handleGenerate} disabled={loading} className="px-6">
           {loading ? "Generating..." : "Generate Report"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={handleDownloadPdf}
+          disabled={pdfLoading || !from || !to}
+          className="gap-2"
+        >
+          <Download className="h-4 w-4" />
+          {pdfLoading ? "Downloading..." : "Download PDF"}
         </Button>
         <Button variant="ghost" onClick={() => { setFrom(""); setTo(""); setReport(null); setEmail(false); }}>
           Reset

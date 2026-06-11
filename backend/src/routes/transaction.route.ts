@@ -5,6 +5,7 @@ import {
   createTransactionController,
   deleteTransactionController,
   duplicateTransactionController,
+  exportTransactionsCsvController,
   getAllTransactionController,
   getTransactionByIdController,
   scanReceiptController,
@@ -28,6 +29,7 @@ transactionRoutes.put("/duplicate/:id", duplicateTransactionController);
 transactionRoutes.put("/update/:id", updateTransactionController);
 
 transactionRoutes.get("/all", getAllTransactionController);
+transactionRoutes.get("/export-csv", exportTransactionsCsvController);
 transactionRoutes.get("/:id", getTransactionByIdController);
 transactionRoutes.delete("/delete/:id", deleteTransactionController);
 transactionRoutes.delete("/bulk-delete", bulkDeleteTransactionController);

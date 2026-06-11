@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { asyncHandler } from "../middlewares/asyncHandler.middlerware";
 import { HTTPSTATUS } from "../config/http.config";
 import {
+  generateReportPdfService,
   generateReportService,
   getAllReportsService,
   updateReportSettingService,
@@ -52,5 +53,24 @@ export const generateReportController = asyncHandler(
       message: "Report generated successfully",
       ...result,
     });
+  }
+);
+
+export const downloadReportPdfController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?._id;
+    const { from, to } = req.query;
+
+    const fromDate = new Date(from as string);
+    const toDate = new Date(to as string);
+
+    const pdfBuffer = await generateReportPdfService(userId, fromDate, toDate);
+
+    const filename = `wealth_report_${(from as string) || "all"}_to_${(to as string) || "all"}.pdf`;
+
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+    res.setHeader("Content-Length", pdfBuffer.length.toString());
+    res.status(HTTPSTATUS.OK).send(pdfBuffer);
   }
 );

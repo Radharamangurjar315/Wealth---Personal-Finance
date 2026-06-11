@@ -295,6 +295,63 @@ export const bulkTransactionService = async (
 
 import Tesseract from "tesseract.js";
 
+export const exportTransactionsCsvService = async (
+  userId: string,
+  filters: {
+    type?: string;
+    from?: string;
+    to?: string;
+  }
+) => {
+  const query: Record<string, any> = { userId };
+
+  if (filters.type) {
+    query.type = filters.type;
+  }
+
+  if (filters.from || filters.to) {
+    query.date = {};
+    if (filters.from) query.date.$gte = new Date(filters.from);
+    if (filters.to) {
+      const toDate = new Date(filters.to);
+      toDate.setDate(toDate.getDate() + 1);
+      query.date.$lt = toDate;
+    }
+  }
+
+  const transactions = await TransactionModel.find(query)
+    .sort({ date: -1 })
+    .lean();
+
+  // CSV header
+  const header = "Date,Title,Type,Category,Amount (₹),Payment Method,Status,Description";
+
+  const rows = transactions.map((tx: any) => {
+    const date = tx.date
+      ? new Date(tx.date).toISOString().split("T")[0]
+      : "";
+    const title = escapeCsvField(tx.title || "");
+    const type = tx.type || "";
+    const category = escapeCsvField(tx.category || "");
+    // tx.amount is stored in paise in the DB (lean bypasses getters)
+    const amount = ((tx.amount ?? 0) / 100).toFixed(2);
+    const paymentMethod = tx.paymentMethod || "";
+    const status = tx.status || "";
+    const description = escapeCsvField(tx.description || "");
+
+    return `${date},${title},${type},${category},${amount},${paymentMethod},${status},${description}`;
+  });
+
+  return [header, ...rows].join("\n");
+};
+
+function escapeCsvField(value: string): string {
+  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
 export const scanReceiptService = async (file: Express.Multer.File | undefined) => {
   if (!file) throw new BadRequestException("No file uploaded");
 

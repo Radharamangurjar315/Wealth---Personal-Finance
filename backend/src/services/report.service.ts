@@ -183,9 +183,9 @@ const healthScore = calculateHealthScore(
 
 
 
-  const periodLabel = `${format(start, "MMMM d")} - ${format(
+  const periodLabel = `${format(start, "MMMM d, yyyy")} - ${format(
     end,
-    "d, yyyy"
+    "MMMM d, yyyy"
   )}`;
 
   // ✅ Handle empty data gracefully (no null return)
@@ -464,3 +464,167 @@ function calculateHealthScore(
   return Math.max(score, 0);
 }
 
+// ─── PDF Report Generator ─────────────────────────────────────────────────────
+
+export const generateReportPdfService = async (
+  userId: string,
+  fromDate: Date,
+  toDate: Date
+): Promise<Buffer> => {
+  // Reuse the existing report service for data
+  const report = await generateReportService(userId, fromDate, toDate);
+
+  const PDFDocument = (await import("pdfkit")).default;
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 50, size: "A4" });
+    const chunks: Buffer[] = [];
+
+    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    const fmtCurrency = (n: number) =>
+      `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`;
+
+    // ── Header ──────────────────────────────────────────────────────────────
+    doc
+      .fontSize(22)
+      .font("Helvetica-Bold")
+      .text("Wealth — Financial Report", { align: "center" });
+
+    doc.moveDown(0.3);
+    doc
+      .fontSize(11)
+      .font("Helvetica")
+      .fillColor("#666666")
+      .text(`Period: ${report.period}`, { align: "center" });
+
+    doc
+      .fontSize(9)
+      .text(`Generated on ${new Date().toLocaleDateString("en-IN")}`, {
+        align: "center",
+      });
+
+    doc.moveDown(1);
+
+    // ── Divider ─────────────────────────────────────────────────────────────
+    doc
+      .strokeColor("#cccccc")
+      .lineWidth(1)
+      .moveTo(50, doc.y)
+      .lineTo(545, doc.y)
+      .stroke();
+
+    doc.moveDown(1);
+
+    // ── Summary Section ─────────────────────────────────────────────────────
+    doc
+      .fontSize(14)
+      .font("Helvetica-Bold")
+      .fillColor("#000000")
+      .text("Financial Summary");
+
+    doc.moveDown(0.5);
+
+    const summaryItems = [
+      { label: "Total Income", value: fmtCurrency(report.summary.income) },
+      { label: "Total Expenses", value: fmtCurrency(report.summary.expenses) },
+      { label: "Available Balance", value: fmtCurrency(report.summary.balance) },
+      { label: "Savings Rate", value: `${report.summary.savingsRate}%` },
+      { label: "Health Score", value: `${report.summary.healthScore}/100` },
+    ];
+
+    doc.fontSize(11).font("Helvetica");
+    for (const item of summaryItems) {
+      doc
+        .fillColor("#333333")
+        .text(`${item.label}:`, 70, doc.y, { continued: true })
+        .fillColor("#000000")
+        .font("Helvetica-Bold")
+        .text(`  ${item.value}`)
+        .font("Helvetica");
+      doc.moveDown(0.2);
+    }
+
+    doc.moveDown(1);
+
+    // ── Top Categories ──────────────────────────────────────────────────────
+    if (report.summary.topCategories && report.summary.topCategories.length > 0) {
+      doc
+        .fontSize(14)
+        .font("Helvetica-Bold")
+        .fillColor("#000000")
+        .text("Top Spending Categories");
+
+      doc.moveDown(0.5);
+
+      // Table header
+      const tableTop = doc.y;
+      doc
+        .fontSize(10)
+        .font("Helvetica-Bold")
+        .fillColor("#555555");
+      doc.text("Category", 70, tableTop);
+      doc.text("Amount", 280, tableTop);
+      doc.text("Share", 420, tableTop);
+
+      doc.moveDown(0.3);
+      doc
+        .strokeColor("#dddddd")
+        .lineWidth(0.5)
+        .moveTo(70, doc.y)
+        .lineTo(500, doc.y)
+        .stroke();
+
+      doc.moveDown(0.3);
+
+      doc.font("Helvetica").fillColor("#000000");
+      for (const cat of report.summary.topCategories) {
+        const y = doc.y;
+        doc.text(cat.name, 70, y);
+        doc.text(fmtCurrency(cat.amount), 280, y);
+        doc.text(`${cat.percent}%`, 420, y);
+        doc.moveDown(0.3);
+      }
+
+      doc.moveDown(1);
+    }
+
+    // ── AI Insights ─────────────────────────────────────────────────────────
+    if (report.insights && report.insights.length > 0) {
+      doc
+        .fontSize(14)
+        .font("Helvetica-Bold")
+        .fillColor("#000000")
+        .text("Insights & Recommendations");
+
+      doc.moveDown(0.5);
+
+      doc.fontSize(10).font("Helvetica").fillColor("#333333");
+      for (const insight of report.insights) {
+        doc.text(`•  ${insight}`, 70, doc.y, { width: 430 });
+        doc.moveDown(0.4);
+      }
+    }
+
+    // ── Footer ──────────────────────────────────────────────────────────────
+    doc.moveDown(2);
+    doc
+      .strokeColor("#cccccc")
+      .lineWidth(1)
+      .moveTo(50, doc.y)
+      .lineTo(545, doc.y)
+      .stroke();
+    doc.moveDown(0.5);
+    doc
+      .fontSize(8)
+      .font("Helvetica")
+      .fillColor("#999999")
+      .text("This report was generated by the Wealth Personal Finance Platform.", {
+        align: "center",
+      });
+
+    doc.end();
+  });
+};
